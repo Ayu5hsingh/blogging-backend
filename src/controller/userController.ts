@@ -1,7 +1,7 @@
 import { PrismaClient } from "@prisma/client/edge";
 import { withAccelerate } from "@prisma/extension-accelerate";
 import { Context } from "hono";
-import { signinSchema, signupSchema } from "../zod/user";
+import { signupSchema } from "../zod/user";
 import { Jwt } from "hono/utils/jwt";
 //universal status code
 enum StatusCode {
@@ -20,7 +20,7 @@ export async function userSignup(c: Context) {
       password: string;
       email: string;
     } = await c.req.json();
-    const parsedUser = signinSchema.safeParse(body);
+    const parsedUser = signupSchema.safeParse(body);
 
     if (!parsedUser.success) {
       return c.json(
