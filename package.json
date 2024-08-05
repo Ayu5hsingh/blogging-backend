@@ -16,7 +16,7 @@
     "@types/node": "^22.0.0",
     "prettier": "^3.3.3",
     "prisma": "^5.17.0",
-    "wrangler": "^3.57.2"
+    "wrangler": "^3.68.0"
   },
   "prisma": {
     "schema": "./src/prisma/schema.prisma"

@@ -1,8 +1,10 @@
 import { PrismaClient } from "@prisma/client/edge";
 import { withAccelerate } from "@prisma/extension-accelerate";
 import { Context } from "hono";
-import { signupSchema } from "../zod/user";
+import { signinSchema, signupSchema } from "../zod/user";
 import { Jwt } from "hono/utils/jwt";
+import { sign } from "hono/utils/jwt/jwt";
+import { string } from "zod";
 //universal status code
 enum StatusCode {
   BADREQ = 400,
@@ -81,6 +83,63 @@ export async function userSignup(c: Context) {
   }
 }
 
-export  function userSignin(c: Context){
-   return null
+
+
+export async function userSignin(c: Context) {
+  try {
+    const prisma = new PrismaClient().$extends(withAccelerate());
+    const body: {
+      email: string;
+      password: string;
+    } = await c.req.json();
+
+    // veryfy with zod
+    const parsedBody = signinSchema.safeParse(body);
+    if (!parsedBody.success) {
+      c.json(
+        {
+          msg: "Incorrect email/passoword !",
+        },
+        StatusCode.BADREQ
+      );
+    }
+
+    const userExists = await prisma.user.findFirst({
+      where: {
+        email: body.email,
+        password: body.password,
+      },
+    });
+
+    if (userExists == null) {
+      return c.json(
+        {
+          msg: "User not found",
+        },
+        StatusCode.BADREQ
+      );
+    }
+    // just to see the content
+    console.log(userExists);
+    const userId: any = userExists.id;
+    const token = await Jwt.sign(userId, c.env.JWT_TOKEN);
+
+    c.json({
+      message: "login successfully",
+      token: token,
+      user: {
+        userId: userId,
+        username: userExists.username,
+        email: userExists.email,
+      },
+    });
+  } catch (error) {
+    console.log(error);
+    c.json(
+      {
+        error: error,
+      },
+      StatusCode.SERVERERROR
+    );
+  }
 }
